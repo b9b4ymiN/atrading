@@ -1,0 +1,71 @@
+# Node
+node_modules/
+.npm/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+.next-turbopack/
+.build/
+
+# Production
+build/
+dist/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# VSCode
+.vscode/
+.history/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# TypeScript
+*.tsbuildinfo
+
+# Yarn
+.yarn/
+
+# Tailwind / PostCSS cache
+.cache/
+
+# Misc
+coverage/
+.idea/
+
+# Ignore claude notes and other AI assistant artifacts
+claude.md
+*.claude*
+.claude/
+
+# Ignore .env secrets and API keys
+secrets.env
+
+# Ignore temporary files
+*.tmp
+*.swp
+
+# Ignore lockfiles in parent folders if accidental
+../../package-lock.json
+
+# Keep package-lock in project root tracked, but ensure not to accidentally track other workspace root locks
+!/package-lock.json
+
+# End of .gitignore
