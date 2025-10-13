@@ -1,37 +1,74 @@
-# Builder stage
-FROM node:20-alpine AS builder
+# Multi-stage build optimized for Oracle Cloud Free Tier
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install build dependencies
+# Copy package files
 COPY package.json package-lock.json* ./
 COPY .npmrc* ./
 
-# Install deps
-RUN npm ci --only=production=false --no-audit --no-fund
+# Install dependencies with production flag
+RUN npm ci --only=production --no-audit --no-fund && \
+    npm cache clean --force
 
-# Copy source
+# Stage 2: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Set environment variables for build
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Install all dependencies (including devDependencies for build)
+RUN npm install --no-audit --no-fund
 
 # Build the Next.js app
 RUN npm run build
 
-# Production image
+# Stage 3: Runner (Production)
 FROM node:20-alpine AS runner
 WORKDIR /app
 
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+# Create non-root user for security (Oracle Cloud best practice)
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Set environment variables
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Copy only necessary files
-COPY package.json package-lock.json* ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.js ./next.config.js
-COPY --from=builder /app/postcss.config.mjs ./postcss.config.mjs
+# Copy only necessary files from builder
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./next.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/postcss.config.mjs ./postcss.config.mjs
 
-# Install production dependencies
-RUN npm ci --only=production --no-audit --no-fund
+# Copy production dependencies
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Expose port
+# Switch to non-root user (Oracle Cloud security requirement)
+USER nextjs
+
+# Expose port 3000
 EXPOSE 3000
 
+# Health check endpoint (important for Oracle Cloud monitoring)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the application
 CMD ["npm", "run", "start"]
