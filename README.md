@@ -8,6 +8,40 @@ A professional, high-performance cryptocurrency trading platform built with Next
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.14-38B2AC?style=flat-square&logo=tailwind-css)
 ![License](https://img.shields.io/badge/license-ISC-green?style=flat-square)
 
+---
+
+## 📋 Table of Contents
+
+- [🔗 Related Project](#-related-project)
+- [✨ Features](#-features)
+- [🏗️ Architecture](#️-architecture)
+- [🚀 Getting Started](#-getting-started)
+- [⚡ Quick Start](#-quick-start-tldr)
+- [🐳 Docker Deployment](#-docker-deployment)
+- [🔌 API Integration](#-api-integration)
+- [📊 Component Library](#-component-library)
+- [🔧 Configuration](#-configuration)
+- [🐛 Troubleshooting](#-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+
+---
+
+## 🔗 Related Project
+
+This frontend application requires the **Trading API Backend** to function.
+
+**Get the API from:** [https://github.com/b9b4ymiN/tradingAPI](https://github.com/b9b4ymiN/tradingAPI)
+
+The Trading API provides:
+- Real-time cryptocurrency market data
+- Order execution and management
+- Position tracking and P&L calculation
+- Account balance and history
+- Exchange information and trading rules
+
+> **⚠️ Important:** Make sure to set up and run the Trading API backend before using this frontend application.
+
 ## ✨ Features
 
 ### 🎯 Core Functionality
@@ -43,6 +77,38 @@ A professional, high-performance cryptocurrency trading platform built with Next
 
 ## 🏗️ Architecture
 
+### System Architecture
+
+```
+┌─────────────────┐
+│   User Browser  │
+│   (Frontend)    │
+└────────┬────────┘
+         │ HTTPS
+         ↓
+┌─────────────────┐
+│   Next.js App   │
+│  (This Repo)    │
+│  Port: 3000     │
+└────────┬────────┘
+         │ API Calls
+         │ X-API-Key Header
+         ↓
+┌─────────────────┐
+│  Trading API    │
+│  (Backend)      │
+│  github.com/    │
+│  b9b4ymiN/      │
+│  tradingAPI     │
+└────────┬────────┘
+         │
+         ↓
+┌─────────────────┐
+│  Binance API    │
+│  (Exchange)     │
+└─────────────────┘
+```
+
 ### Tech Stack
 - **Framework:** Next.js 15.5.4 (App Router)
 - **UI Library:** React 19.2.0
@@ -50,6 +116,7 @@ A professional, high-performance cryptocurrency trading platform built with Next
 - **Language:** TypeScript 5.9.3
 - **Validation:** Zod 4.1.12
 - **Runtime:** Edge (Vercel/Cloudflare compatible)
+- **Backend API:** [Trading API](https://github.com/b9b4ymiN/tradingAPI)
 
 ### Project Structure
 ```
@@ -97,11 +164,27 @@ A professional, high-performance cryptocurrency trading platform built with Next
 ### Prerequisites
 - Node.js 18.x or higher
 - npm or yarn package manager
-- API key from crypto trading API
+- **Trading API Backend** running (see [Related Project](#-related-project))
+- API key from the Trading API
 
 ### Installation
 
-1. **Clone the repository**
+#### Step 1: Setup Trading API Backend
+
+1. Clone and setup the Trading API:
+```bash
+git clone https://github.com/b9b4ymiN/tradingAPI.git
+cd tradingAPI
+# Follow the setup instructions in the Trading API repository
+```
+
+2. Start the Trading API server and note:
+   - API base URL (e.g., `https://crypto-dasimoa.duckdns.org`)
+   - Your API key for authentication
+
+#### Step 2: Setup Frontend Application
+
+1. **Clone this repository**
 ```bash
 git clone <repository-url>
 cd ATrading
@@ -117,7 +200,7 @@ npm install
 # Create .env.local file
 cp .env.example .env.local
 
-# Add your configuration
+# Add your Trading API configuration
 NEXT_PUBLIC_API_BASE_URL=https://crypto-dasimoa.duckdns.org
 ```
 
@@ -126,8 +209,10 @@ NEXT_PUBLIC_API_BASE_URL=https://crypto-dasimoa.duckdns.org
 npm run dev
 ```
 
-5. **Open browser**
-Navigate to [http://localhost:3000](http://localhost:3000)
+5. **Open browser and login**
+   - Navigate to [http://localhost:3000](http://localhost:3000)
+   - Enter your API key from the Trading API backend
+   - Start trading!
 
 ### Building for Production
 
@@ -276,15 +361,62 @@ import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
 12: 48px   16: 64px    20: 80px    24: 96px
 ```
 
+## 🔌 API Integration
+
+### Trading API Setup
+
+This application integrates with the **Trading API Backend** available at:
+[https://github.com/b9b4ymiN/tradingAPI](https://github.com/b9b4ymiN/tradingAPI)
+
+### API Endpoints Used
+
+The frontend communicates with the following API endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/api/status` | GET | Trading account status |
+| `/api/balance` | GET | Account balance |
+| `/api/positions` | GET | Open positions |
+| `/api/position/close` | POST | Close position |
+| `/api/orders` | GET | Active orders |
+| `/api/orders/cancel` | POST | Cancel orders |
+| `/api/trade` | POST | Place new trade |
+| `/api/exchange/info` | GET | Exchange information |
+| `/api/account/snapshot` | GET | Account history |
+
+### Authentication
+
+The application uses API key authentication:
+1. User logs in with their API key on `/login`
+2. API key is stored in HTTP-only secure cookie
+3. All API requests include the key in `X-API-Key` header
+4. Session is managed server-side for security
+
+### API Response Format
+
+All API responses follow this structure:
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": {
+    // Response data here
+  },
+  "timestamp": 1760321183
+}
+```
+
 ## 🔧 Configuration
 
 ### Environment Variables
 ```env
-# API Configuration
+# API Configuration (Required)
 NEXT_PUBLIC_API_BASE_URL=https://crypto-dasimoa.duckdns.org
 
-# Optional: Build ID
+# Optional: Build Configuration
 BUILD_ID=production-v1
+NODE_ENV=production
 ```
 
 ### Next.js Config
@@ -342,19 +474,41 @@ Custom theme extensions in `tailwind.config.ts`:
 
 ### Common Issues
 
-**Issue: API connection fails**
+**Issue: "API connection fails" or "Network error"**
 ```bash
-# Check API health
+# 1. Verify Trading API is running
 curl https://crypto-dasimoa.duckdns.org/health
 
-# Verify API key
+# 2. Check if API key is valid
 curl -H "X-API-Key: YOUR_KEY" https://crypto-dasimoa.duckdns.org/api/status
+
+# 3. Verify environment variable
+echo $NEXT_PUBLIC_API_BASE_URL
+
+# 4. Check Trading API logs for errors
+# See: https://github.com/b9b4ymiN/tradingAPI
+```
+
+**Issue: "Unauthorized" or "Invalid API key"**
+- Make sure the Trading API is running
+- Verify your API key is correct
+- Check that the API key is registered in the Trading API backend
+- Try logging out and logging in again with a fresh API key
+
+**Issue: "No positions/data showing"**
+```bash
+# 1. Test API directly
+curl -H "X-API-Key: YOUR_KEY" https://crypto-dasimoa.duckdns.org/api/positions
+
+# 2. Check browser console for errors
+# 3. Verify API response format matches expected structure
+# 4. Try refreshing the page or clearing cache
 ```
 
 **Issue: Build fails**
 ```bash
-# Clear cache
-rm -rf .next node_modules
+# Clear cache and reinstall
+rm -rf .next node_modules package-lock.json
 npm install
 npm run build
 ```
@@ -363,8 +517,13 @@ npm run build
 ```bash
 # Rebuild Tailwind
 npm run dev
-# Hard refresh browser (Ctrl+Shift+R)
+# Hard refresh browser (Ctrl+Shift+R or Cmd+Shift+R)
 ```
+
+**Issue: Docker container can't connect to API**
+- If API is on `localhost`, use `host.docker.internal` instead
+- Check Docker network settings
+- Ensure API URL in `.env.local` is accessible from container
 
 ## 📝 Development Guidelines
 
@@ -401,18 +560,52 @@ style: improve button spacing
 
 This project is licensed under the ISC License.
 
+## ⚡ Quick Start (TL;DR)
+
+```bash
+# 1. Setup Trading API Backend first
+git clone https://github.com/b9b4ymiN/tradingAPI.git
+cd tradingAPI
+# Follow API setup instructions
+
+# 2. Clone and run this frontend
+git clone <this-repository-url>
+cd ATrading
+npm install
+echo "NEXT_PUBLIC_API_BASE_URL=https://crypto-dasimoa.duckdns.org" > .env.local
+npm run dev
+
+# 3. Open http://localhost:3000 and login with your API key
+```
+
 ## 🙏 Acknowledgments
 
+- **Trading API Backend** - [b9b4ymiN/tradingAPI](https://github.com/b9b4ymiN/tradingAPI)
 - **Next.js Team** - Amazing framework
 - **Tailwind Labs** - Excellent CSS framework
 - **Vercel** - Edge runtime infrastructure
 - **React Team** - Revolutionary UI library
+- **Binance** - Cryptocurrency exchange integration
 
 ## 📞 Support
 
-- **Documentation:** Check inline code comments
-- **Issues:** Open a GitHub issue
+- **Frontend Issues:** Open a GitHub issue on this repository
+- **Backend/API Issues:** [tradingAPI Issues](https://github.com/b9b4ymiN/tradingAPI/issues)
+- **Documentation:** Check inline code comments and README
+- **API Documentation:** See [Trading API Docs](https://github.com/b9b4ymiN/tradingAPI#readme)
 - **Security:** Report security issues privately
+
+### Getting Help
+
+1. **Check Troubleshooting section** above for common issues
+2. **Verify Trading API is running** and accessible
+3. **Check browser console** for frontend errors
+4. **Review API logs** for backend errors
+5. **Open an issue** with detailed information:
+   - Steps to reproduce
+   - Error messages
+   - Environment details (OS, Node version, etc.)
+   - API response (if applicable)
 
 ## 🗺️ Roadmap
 
