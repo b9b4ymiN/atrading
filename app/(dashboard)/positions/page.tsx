@@ -34,6 +34,14 @@ export default async function PositionsPage() {
     ? data
     : [];
 
+  const formatCurrency = (value: number) => {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    return `$${safeValue.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   return (
     <main className="space-y-6 sm:space-y-8">
       {/* Hero Section */}
@@ -135,7 +143,22 @@ export default async function PositionsPage() {
                 const pnl = parseFloat(position.unrealizedPnl || position.pnl || position.unRealizedProfit || 0);
                 const pnlPercent = parseFloat(position.percentage || position.pnlPercent || 0);
                 const isProfitable = pnl >= 0;
-                
+                const rawSize = parseFloat(position.size || position.positionAmt || position.quantity || 0);
+                const size = Number.isFinite(rawSize) ? rawSize : 0;
+                const absSize = Math.abs(size);
+                const entryPriceRaw = parseFloat(position.entryPrice || 0);
+                const entryPrice = Number.isFinite(entryPriceRaw) ? entryPriceRaw : 0;
+                const markPriceRaw = parseFloat(position.markPrice || position.currentPrice || position.entryPrice || 0);
+                const markPrice = Number.isFinite(markPriceRaw) ? markPriceRaw : 0;
+                const priceForNotional = markPrice || entryPrice;
+                const positionNotional = priceForNotional ? absSize * priceForNotional : 0;
+                const derivedSide =
+                  absSize === 0
+                    ? (position.side || position.positionSide || "BOTH")
+                    : size > 0
+                    ? "LONG"
+                    : "SHORT";
+
                 return (
                   <TableRow key={position.symbol || index}>
                     <TableCell className="font-semibold text-white">
@@ -143,18 +166,25 @@ export default async function PositionsPage() {
                     </TableCell>
                     <TableCell>
                       <SideBadge
-                        side={position.side || position.positionSide}
+                        side={derivedSide}
                         size="sm"
                       />
                     </TableCell>
-                    <TableCell align="right" className="font-mono">
-                      {parseFloat(position.size || position.positionAmt || position.quantity || 0).toFixed(4)}
+                    <TableCell align="right">
+                      <div className="flex flex-col items-end">
+                        <span className="font-mono">{absSize.toFixed(4)}</span>
+                        {positionNotional > 0 && (
+                          <span className="text-xs text-text-secondary">
+                            {formatCurrency(positionNotional)}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell align="right" className="font-mono">
-                      ${parseFloat(position.entryPrice || 0).toFixed(2)}
+                      ${entryPrice.toFixed(2)}
                     </TableCell>
                     <TableCell align="right" className="font-mono">
-                      ${parseFloat(position.markPrice || position.currentPrice || position.entryPrice || 0).toFixed(2)}
+                      ${markPrice.toFixed(2)}
                     </TableCell>
                     <TableCell align="right">
                       <div className="flex items-center justify-end gap-1.5">

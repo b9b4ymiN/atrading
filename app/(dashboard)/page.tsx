@@ -58,6 +58,14 @@ export default async function Dashboard() {
     ? accountSnapshot.data.snapshotVos
     : [];
 
+  const formatCurrency = (value: number) => {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    return `$${safeValue.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   // Calculate stats
   const totalBalance =
     balanceData.totalWalletBalance || balanceData.availableBalance || 0;
@@ -259,13 +267,18 @@ export default async function Dashboard() {
                 const pnl = parseFloat(pos.unrealizedProfit || pos.unRealizedProfit || 0);
                 const entryPrice = parseFloat(pos.entryPrice || 0);
                 const markPrice = parseFloat(pos.markPrice || pos.currentPrice || pos.entryPrice || 0);
-                const positionAmt = parseFloat(pos.positionAmt || pos.size || 0);
+                const positionAmtRaw = parseFloat(pos.positionAmt || pos.size || 0);
+                const positionAmt = Number.isFinite(positionAmtRaw) ? positionAmtRaw : 0;
+                const absPositionSize = Math.abs(positionAmt);
                 const leverage = parseFloat(pos.leverage || 1);
+                const priceForNotional = markPrice || entryPrice;
+                const positionNotional = priceForNotional ? absPositionSize * priceForNotional : 0;
+                const direction = positionAmt >= 0 ? 1 : -1;
 
                 // Calculate PnL percentage relative to margin: ((markPrice - entryPrice) / entryPrice) * leverage * 100
-                // This shows the return on your margin/collateral
+                // Direction is derived from the signed position amount
                 const pnlPercent = entryPrice > 0
-                  ? ((markPrice - entryPrice) / entryPrice) * leverage * 100
+                  ? ((markPrice - entryPrice) / entryPrice) * leverage * 100 * direction
                   : 0;
 
                 return (
@@ -275,12 +288,19 @@ export default async function Dashboard() {
                     </TableCell>
                     <TableCell>
                       <SideBadge
-                        side={pos.side || pos.positionSide}
+                        side={(positionAmt >= 0 ? "LONG" : "SHORT")}
                         size="sm"
                       />
                     </TableCell>
-                    <TableCell align="right" className="font-mono">
-                      {positionAmt.toFixed(4)}
+                    <TableCell align="right">
+                      <div className="flex flex-col items-end">
+                        <span className="font-mono">{absPositionSize.toFixed(4)}</span>
+                        {positionNotional > 0 && (
+                          <span className="text-xs text-text-secondary">
+                            {formatCurrency(positionNotional)}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell align="right" className="font-mono">
                       ${entryPrice.toFixed(2)}
@@ -312,7 +332,7 @@ export default async function Dashboard() {
                           pnl >= 0 ? "text-emerald-400" : "text-red-400"
                         }`}
                       >
-                        {pnl >= 0 ? "+" : "-"}{pnlPercent.toFixed(2)}%
+                        {`${pnlPercent >= 0 ? "+" : ""}${pnlPercent.toFixed(2)}%`}
                       </span>
                     </TableCell>
                     <TableCell align="center">
