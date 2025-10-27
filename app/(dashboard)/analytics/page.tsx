@@ -9,14 +9,14 @@ import { AutoRefresh } from "./auto-refresh";
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const PERIODS = ["1d", "7d", "1w", "1m"] as const;
   type Period = (typeof PERIODS)[number];
   const isPeriod = (value: unknown): value is Period =>
     typeof value === "string" && PERIODS.includes(value as Period);
 
-  const params = searchParams ?? {};
+  const params = (await searchParams) ?? {};
   const rawPeriod = Array.isArray(params.period) ? params.period[0] : params.period;
   const period = isPeriod(rawPeriod) ? rawPeriod : "1d";
   const rawUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
