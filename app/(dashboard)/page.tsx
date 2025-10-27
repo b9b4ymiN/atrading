@@ -309,10 +309,10 @@ export default async function Dashboard() {
                     <TableCell align="right">
                       <span
                         className={`font-mono font-semibold ${
-                          pnlPercent >= 0 ? "text-emerald-400" : "text-red-400"
+                          pnl >= 0 ? "text-emerald-400" : "text-red-400"
                         }`}
                       >
-                        {pnlPercent >= 0 ? "+" : ""}{pnlPercent.toFixed(2)}%
+                        {pnl >= 0 ? "+" : "-"}{pnlPercent.toFixed(2)}%
                       </span>
                     </TableCell>
                     <TableCell align="center">

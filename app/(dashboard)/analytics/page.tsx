@@ -4,21 +4,30 @@ import { Card, CardGrid } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/Stats";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { AutoRefresh } from "./auto-refresh";
 
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; userId?: string }>;
+  searchParams?: Record<string, string | string[] | undefined>;
 }) {
-  const params = await searchParams;
-  const period = (params.period as "1d" | "7d" | "1w" | "1m") || "1d";
+  const PERIODS = ["1d", "7d", "1w", "1m"] as const;
+  type Period = (typeof PERIODS)[number];
+  const isPeriod = (value: unknown): value is Period =>
+    typeof value === "string" && PERIODS.includes(value as Period);
+
+  const params = searchParams ?? {};
+  const rawPeriod = Array.isArray(params.period) ? params.period[0] : params.period;
+  const period = isPeriod(rawPeriod) ? rawPeriod : "1d";
+  const rawUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
+  const userId = typeof rawUserId === "string" && rawUserId.trim() ? rawUserId.trim() : undefined;
 
   let summary: any = null;
   let error: string | null = null;
 
   try {
     summary = await apiFetch(
-      endpoints.summary({ period, userId: params.userId })
+      endpoints.summary({ period, userId })
     );
   } catch (err: any) {
     error = err.message;
@@ -28,6 +37,7 @@ export default async function AnalyticsPage({
 
   return (
     <main className="space-y-6 sm:space-y-8">
+      <AutoRefresh intervalMs={30000} />
       {/* Hero Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="animate-slideInLeft">
@@ -72,7 +82,7 @@ export default async function AnalyticsPage({
             </label>
             <input
               name="userId"
-              defaultValue={params.userId}
+              defaultValue={userId ?? ""}
               placeholder="Filter by user"
               className="w-full border border-border bg-bg-secondary p-3 rounded-lg text-white placeholder-text-secondary focus:ring-2 focus:ring-brand-orange focus:border-brand-orange transition-all text-base"
             />

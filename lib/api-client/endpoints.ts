@@ -12,6 +12,15 @@ export const endpoints = {
   trade: () => `/api/trade`,
   tradeById: (tradeId: string) => `/api/trade/${tradeId}`,
   tradesByUser: (userId: string) => `/api/trades/${userId}`,
-  summary: (q?: { period?: "1d"|"7d"|"1m"|"1w"; userId?: string }) =>
-    `/api/summary` + (q ? `?${new URLSearchParams(q as any)}` : ""),
+  summary: (q?: { period?: "1d"|"7d"|"1m"|"1w"; userId?: string }) => {
+    if (!q) return `/api/summary`;
+    const params = Object.entries(q).reduce<[string, string][]>((acc, [key, value]) => {
+      if (value !== undefined && value !== "") {
+        acc.push([key, String(value)]);
+      }
+      return acc;
+    }, []);
+    const search = params.length ? `?${new URLSearchParams(params)}` : "";
+    return `/api/summary${search}`;
+  },
 } as const;
